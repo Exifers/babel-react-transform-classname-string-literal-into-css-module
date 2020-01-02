@@ -20,11 +20,6 @@ const toCamelCaseSoft = input =>
       ''
     );
 
-
-// TODO: support for multiple classnames in same string and respect order, eg
-// 'hello custom-class' -> styles.hello + ' custom-class'
-// 'hello1 hello2' -> styles.hello1 + '  ' + styles.hello1
-
 const computeClassnamesPerFiles = (fileRelPaths) => {
   let classnamesPerFiles = {};
   for (const fileRelPath of fileRelPaths) {
@@ -115,14 +110,77 @@ const myPlugin = function() {
               if (value !== null) {
                 const classnames = value.split(' ').filter(c => c.length);
                 if (classnames.length > 1) {
+                  const classnamesFiles = {};
                   // handle multiple classnames
                   for (const classname of classnames) {
                     const fileRelPath = findClassnameInFile(
                       classname,
                       this.classnamesPerFiles
                     );
-                    if (fileRelPath) {
-                      // classname exists in one file
+                    classnamesFiles[classname] = fileRelPath; // null if file not found
+                  }
+                  if (Object.keys(classnamesFiles).length > 0) {
+                    if (Object.values(classnamesFiles).find(Boolean)) {
+
+                      // calculate template literal
+                      let helperArray = [];
+                      for (const entry of Object.entries(classnamesFiles)) {
+                        const classname = entry[0];
+                        const file = entry[1];
+                        if (file) {
+                          helperArray.push('|');
+                        }
+                        else {
+                          helperArray.push(classname);
+                        }
+                      }
+                      let helperString = helperArray.join(' ')
+
+                      templateElementsValues = helperString.split('|');
+                      console.log(templateElementsValues);
+
+                      // mutate AST
+                      attribute.value = {
+                        type: 'JSXExpressionContainer',
+                        expression: {
+                          type: 'TemplateLiteral',
+                          expressions: (
+                            Object.keys(classnamesFiles)
+                              .filter(classname => !!classnamesFiles[classname])
+                              .map(classname => ({
+                                type: 'MemberExpression',
+                                object: {
+                                  type: 'Identifier',
+                                  name: 'styles'
+                                },
+                                property: {
+                                  type: 'Identifier',
+                                  name: classname
+                                }
+                              }))
+                          ),
+                          quasis: (
+                            templateElementsValues
+                              .map((templateElementValue, index) => ({
+                                type: 'TemplateElement',
+                                value: {
+                                  // TODO find out difference between raw and
+                                  // cooked
+                                  raw: templateElementValue,
+                                  cooked: templateElementValue
+                                },
+                                tail: (
+                                  !!Object.values(classnamesFiles)
+                                  [Object.keys(classnamesFiles).length - 1]
+                                  ? false 
+                                  : index === templateElementsValues.length - 1 
+                                )
+                              }))
+                          )
+                        }
+                      }
+                      console.log(attribute.value.expression.quasis);
+                      // `a ${styles.bonjour5} b c d ${styles.bonjour2} e`
                     }
                   }
                 }
@@ -162,18 +220,22 @@ const myPlugin = function() {
 };
 
 const code = `
+// this is a comment
 let a = <div className='bonjour'>Hi</div>;
 let b = <div className={'bonjour2'}>Hi</div>;
 let c = <div className='bonjour3'/>;
 let d = <div className={1}>Hi</div>;
 let e = <div className={"bonjour4"}>Hi</div>;
 let f = <div className2={"hello"}>Hi</div>;
-let g = <div className={"hello-everyone"}>Hi</div>;
+let g = <div className={'hello-everyone'}>Hi</div>;
 let h = <div className={"bonjour5"}>Hi</div>;
+let i = <div className={"a bonjour5 b c  d bonjour2  e"}>Hi</div>;
+let j = <div className={"bonjour3 bonjour5 bonjour2"}>Hi</div>;
+let k = <div className2={"bonjour3 bonjour5 bonjour2"}>Hi</div>;
 `;
 
 const out_example = `
-let a = <div className={styles.bonjour}/>;
+let a = <div className={\`\${styles.bonjour} \${styles.bonjour2} a\`}/>;
 ` 
 
 const options = {
@@ -218,12 +280,3 @@ console.log(
   )
 );
 */
-
-const check_if_classname_exists = classname => {
-  const rules = parsed_css.stylesheet.rules;
-  return !!rules.find(rule => !!rule.selectors.find(selector => selector === classname))
-}
-
-console.log(
-  check_if_classname_exists('hello2')
-);
