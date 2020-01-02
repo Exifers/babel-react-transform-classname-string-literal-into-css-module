@@ -1,0 +1,204 @@
+import babel from '@babel/core';
+import css from 'css';
+import fs from 'fs';
+import path from 'path';
+
+// Convert CSS classname into CSS module classname
+// This basically converts into camel case but keeping the original case
+// of the first letter
+const toCamelCaseSoft = input =>
+  input
+    .split(/[\-.]+/)
+    .filter(s => s.length)
+    .reduce(
+      (a, c, i) =>
+        i === 0
+          ? a + c
+          : !!a.match(/[a-zA-Z0-9]$/)
+          ? a + c[0].toUpperCase() + c.substring(1)
+          : a + c,
+      ''
+    );
+
+
+// TODO: support for multiple classnames in same string and respect order, eg
+// 'hello custom-class' -> styles.hello + ' custom-class'
+// 'hello1 hello2' -> styles.hello1 + '  ' + styles.hello1
+
+const computeClassnamesPerFiles = (fileRelPaths) => {
+  let classnamesPerFiles = {};
+  for (const fileRelPath of fileRelPaths) {
+    // reading file
+    const filePath = path.join(__dirname, fileRelPath);
+    const code = fs.readFileSync(filePath, 'utf-8'); 
+
+    // parsing css
+    const parsed = css.parse(code);
+
+    // extracting all selectors from AST
+    const rules = parsed.stylesheet.rules;
+    let selectors = [];
+    for (const rule of rules) {
+      selectors = [...selectors, rule.selectors];
+    }
+
+    classnamesPerFiles[fileRelPath] = selectors;
+  }
+  return classnamesPerFiles;
+}
+
+const findClassnameInFile = (classname, classnamesPerFiles) => {
+  const matched = Object.entries(classnamesPerFiles).reduce((acc, cur) => {
+    const file = cur[0];
+    const classnames = cur[1];
+    
+    const matchedClassnames = classnames.filter(c => c === classname);
+    
+    if (matchedClassnames.length) {
+      acc[file] = matchedClassnames;
+    }
+    
+    return acc;
+  }, {});
+
+  if (Object.keys(matched).length === 0) {
+    // no classname found
+    return null;
+  }
+  if (Object.keys(matched).length > 1) {
+    // conflict accross multiple files
+    return Object.keys(matched)[0];
+  }
+  if (Object.values(matched)[0].length > 1) {
+    // conflict inside one file
+    return Object.keys(matched)[0];
+  } 
+  // no conflict
+  return Object.keys(matched)[0];
+}
+
+const myPlugin = function() {
+  return {
+    visitor: {
+      JSXElement(path, state) {
+        const node = path.node;
+        const attributes = node.openingElement.attributes
+        const options = state.opts;
+
+        if (attributes.length) {
+          for (let attribute of attributes) {
+            if (attribute.name.name === 'className') {
+
+              // find attribute value
+              let value = null;
+              switch (attribute.value.type) {
+                case 'StringLiteral':
+                  value = attribute.value.value;
+                  break;
+                case 'JSXExpressionContainer':
+                  const expression = attribute.value.expression
+                  if (expression.type === 'StringLiteral') {
+                    value = expression.value; 
+                  }
+                  break;
+              }
+
+              // transform AST
+              if (value !== null) {
+                const classnames = value.split(' ');
+                if (classnames.length) {
+                  // handle multiple classnames
+                }
+                else {
+                  // checking the classname exists in a file
+                  // mutating the AST
+                  attribute.value = {
+                    type: 'JSXExpressionContainer',
+                    expression: {
+                      type: 'MemberExpression',
+                      object: {
+                        type: 'Identifier',
+                        name: 'styles'
+                      },
+                      property: {
+                        type: 'Identifier',
+                        name: value
+                      },
+                      computed: false
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+    },
+  }
+};
+
+const code = `
+let a = <div className='bonjour'>Hi</div>;
+let b = <div className={'bonjour2'}>Hi</div>;
+let c = <div className='bonjour3'/>;
+let d = <div className={1}>Hi</div>;
+let e = <div className={"bonjour4"}>Hi</div>;
+let f = <div className2={"hello"}>Hi</div>;
+let g = <div className={"hello-everyone"}>Hi</div>;
+`;
+
+const out_example = `
+let a = <div className={styles.bonjour}/>;
+` 
+
+const options = {
+  plugins: [
+    "@babel/plugin-syntax-jsx",
+    myPlugin
+  ]
+};
+
+const parsed = babel.parse(
+  code,
+  options
+);
+
+const out = babel.transform(
+  code,
+  options
+);
+
+const parsed_out_example = babel.parse(
+  out_example,
+  options
+);
+
+const css_code = `
+  hello {
+    color: red;
+  }
+`;
+
+const parsed_css = css.parse(css_code);
+
+//console.log(JSON.stringify(parsed.program.body[0].declarations[0].init, null, 4));
+console.log(out);
+
+/*
+console.log(
+  JSON.stringify(
+    parsed_out_example.program.body[0].declarations[0].init,
+    null,
+    4
+  )
+);
+*/
+
+const check_if_classname_exists = classname => {
+  const rules = parsed_css.stylesheet.rules;
+  return !!rules.find(rule => !!rule.selectors.find(selector => selector === classname))
+}
+
+console.log(
+  check_if_classname_exists('hello2')
+);
