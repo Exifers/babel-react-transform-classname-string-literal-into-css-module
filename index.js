@@ -1,7 +1,7 @@
-import babel from '@babel/core';
-import css from 'css';
-import fs from 'fs';
-import path from 'path';
+const babel = require('@babel/core');
+const css = require('css');
+const fs = require('fs');
+const path = require('path');
 
 // Convert CSS classname into CSS module classname
 // This basically converts into camel case but keeping the original case
@@ -39,10 +39,15 @@ const computeClassnamesPerFiles = (fileRelPaths) => {
     const rules = parsed.stylesheet.rules;
     let selectors = [];
     for (const rule of rules) {
-      selectors = [...selectors, rule.selectors];
+      selectors = [...selectors, ...rule.selectors];
     }
 
-    classnamesPerFiles[fileRelPath] = selectors;
+    const classnameRegex = /^\.[a-zA-Z0-9\-_]+$/;
+    const classnames = selectors
+      .filter(selector => !!selector.match(classnameRegex))
+      .map(e => e.substring(1));
+
+    classnamesPerFiles[fileRelPath] = classnames;
   }
   return classnamesPerFiles;
 }
@@ -79,6 +84,9 @@ const findClassnameInFile = (classname, classnamesPerFiles) => {
 
 const myPlugin = function() {
   return {
+    pre() {
+      this.classnamesPerFiles = computeClassnamesPerFiles(['styles.css']);
+    },
     visitor: {
       JSXElement(path, state) {
         const node = path.node;
@@ -103,28 +111,44 @@ const myPlugin = function() {
                   break;
               }
 
-              // transform AST
+              // process found attribute value
               if (value !== null) {
-                const classnames = value.split(' ');
-                if (classnames.length) {
+                const classnames = value.split(' ').filter(c => c.length);
+                if (classnames.length > 1) {
                   // handle multiple classnames
+                  for (const classname of classnames) {
+                    const fileRelPath = findClassnameInFile(
+                      classname,
+                      this.classnamesPerFiles
+                    );
+                    if (fileRelPath) {
+                      // classname exists in one file
+                    }
+                  }
                 }
                 else {
-                  // checking the classname exists in a file
-                  // mutating the AST
-                  attribute.value = {
-                    type: 'JSXExpressionContainer',
-                    expression: {
-                      type: 'MemberExpression',
-                      object: {
-                        type: 'Identifier',
-                        name: 'styles'
-                      },
-                      property: {
-                        type: 'Identifier',
-                        name: value
-                      },
-                      computed: false
+                  const classname = value;
+                  const fileRelPath = findClassnameInFile(
+                    classname,
+                    this.classnamesPerFiles
+                  );
+                  if (fileRelPath) {
+                    // classname exists in one file
+                    // mutating the AST
+                    attribute.value = {
+                      type: 'JSXExpressionContainer',
+                      expression: {
+                        type: 'MemberExpression',
+                        object: {
+                          type: 'Identifier',
+                          name: 'styles'
+                        },
+                        property: {
+                          type: 'Identifier',
+                          name: value
+                        },
+                        computed: false
+                      }
                     }
                   }
                 }
@@ -145,6 +169,7 @@ let d = <div className={1}>Hi</div>;
 let e = <div className={"bonjour4"}>Hi</div>;
 let f = <div className2={"hello"}>Hi</div>;
 let g = <div className={"hello-everyone"}>Hi</div>;
+let h = <div className={"bonjour5"}>Hi</div>;
 `;
 
 const out_example = `
