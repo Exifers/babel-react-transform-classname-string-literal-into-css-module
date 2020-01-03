@@ -46,10 +46,12 @@ const myPlugin = function () {
         if (classnames.length === 0) {
           return;
         }
+
         const mapClassnamesToFiles = computeMapClassnamesToFiles(classnames, this.mapFileToClassnames);
-        if (!Object.values(mapClassnamesToFiles).find(Boolean)) {
+        if (!Array.from(mapClassnamesToFiles.values()).find(Boolean)) {
           return;
         }
+
         mutateClassnameToCSSModules(attribute, mapClassnamesToFiles);
       }
     }

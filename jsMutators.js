@@ -1,7 +1,7 @@
 const mutateClassnameToCSSModules = (attribute, mapClassnamesToFiles) => {
 
   // handle single classname case
-  if (Object.values(mapClassnamesToFiles).length === 1) {
+  if (mapClassnamesToFiles.size === 1) {
     attribute.value = {
       type: 'JSXExpressionContainer',
       expression: {
@@ -12,7 +12,7 @@ const mutateClassnameToCSSModules = (attribute, mapClassnamesToFiles) => {
         },
         property: {
           type: 'Identifier',
-          name: Object.keys(mapClassnamesToFiles)[0]
+          name: Array.from(mapClassnamesToFiles.keys())[0]
         },
         computed: false
       }
@@ -21,7 +21,7 @@ const mutateClassnameToCSSModules = (attribute, mapClassnamesToFiles) => {
   }
 
   // calculate template literal
-  const templateElementsValues = Object.entries(mapClassnamesToFiles)
+  const templateElementsValues = Array.from(mapClassnamesToFiles.entries())
     .map(([classname, file]) => file ? '|' : classname)
     .join(' ')
     .split('|');
@@ -32,8 +32,8 @@ const mutateClassnameToCSSModules = (attribute, mapClassnamesToFiles) => {
     expression: {
       type: 'TemplateLiteral',
       expressions: (
-        Object.keys(mapClassnamesToFiles)
-          .filter(classname => !!mapClassnamesToFiles[classname])
+        Array.from(mapClassnamesToFiles.keys())
+          .filter(classname => !!mapClassnamesToFiles.get(classname))
           .map(classname => ({
             type: 'MemberExpression',
             object: {
@@ -56,8 +56,8 @@ const mutateClassnameToCSSModules = (attribute, mapClassnamesToFiles) => {
               cooked: templateElementValue
             },
             tail: (
-              !!Object.values(mapClassnamesToFiles)
-                [Object.keys(mapClassnamesToFiles).length - 1]
+              !!Array.from(mapClassnamesToFiles.values())
+                [mapClassnamesToFiles.size - 1]
                 ? false
                 : index === templateElementsValues.length - 1
             )
