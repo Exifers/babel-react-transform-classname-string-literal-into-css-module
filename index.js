@@ -3,7 +3,6 @@ const css = require('css');
 const {computeMapFileToClassnames, computeMapClassnamesToFiles} = require('./computers');
 const {readFiles} = require('./io');
 const {classnameValueASTExtractor} = require('./jsExtractors');
-const {mutateClassnameToCSSModules} = require('./jsMutators');
 
 //TODO: camelization, import, extract classname from selector
 
@@ -24,39 +23,67 @@ const toCamelCaseSoft = input =>
       ''
     );
 
-const myPlugin = function () {
-  return {
-    pre() {
-      const fileContents = readFiles(['styles.css']);
-      this.mapFileToClassnames = computeMapFileToClassnames(fileContents);
-    },
-    visitor: {
-      JSXAttribute(path) {
-        const attribute = path.node;
-        if (attribute.name.name !== 'className') {
-          return;
-        }
-
-        const classnameValue = classnameValueASTExtractor(attribute);
-        if (!classnameValue) {
-          return;
-        }
-
-        const classnames = classnameValue.split(' ').filter(Boolean);
-        if (classnames.length === 0) {
-          return;
-        }
-
-        const mapClassnamesToFiles = computeMapClassnamesToFiles(classnames, this.mapFileToClassnames);
-        if (!Array.from(mapClassnamesToFiles.values()).find(Boolean)) {
-          return;
-        }
-
-        mutateClassnameToCSSModules(attribute, mapClassnamesToFiles);
+const reactTransformClassnameStringLiteralIntoCSSModules = ({types: t}) => ({
+  inherits: require("@babel/plugin-syntax-jsx").default,
+  pre() {
+    const fileContents = readFiles(['styles.css']);
+    this.mapFileToClassnames = computeMapFileToClassnames(fileContents);
+  },
+  visitor: {
+    JSXAttribute(path) {
+      const attribute = path.node;
+      if (attribute.name.name !== 'className') {
+        return;
       }
+
+      const classnameValue = classnameValueASTExtractor(attribute);
+      if (!classnameValue) {
+        return;
+      }
+
+      const classnames = classnameValue.split(' ').filter(Boolean);
+      if (classnames.length === 0) {
+        return;
+      }
+
+      const mapClassnamesToFiles = computeMapClassnamesToFiles(classnames, this.mapFileToClassnames);
+      if (!Array.from(mapClassnamesToFiles.values()).find(Boolean)) {
+        return;
+      }
+
+      // handle single classname case
+      if (mapClassnamesToFiles.size === 1) {
+        attribute.value = t.JSXExpressionContainer(
+          t.MemberExpression(
+            t.Identifier('styles'),
+            t.Identifier(Array.from(mapClassnamesToFiles.keys())[0])
+          )
+        );
+        return;
+      }
+
+      // calculate template literal
+      const templateElementsValues = Array.from(mapClassnamesToFiles.entries())
+        .map(([classname, file]) => file ? '|' : classname)
+        .join(' ')
+        .split('|');
+
+      // handle multiple classnames case
+      attribute.value = t.JSXExpressionContainer(
+        t.TemplateLiteral(
+          templateElementsValues
+            .map(value => t.TemplateElement({raw: value, cooked: value})),
+          Array.from(mapClassnamesToFiles.keys())
+            .filter(classname => !!mapClassnamesToFiles.get(classname))
+            .map(classname => t.MemberExpression(
+              t.Identifier('styles'),
+              t.Identifier(classname))
+            )
+        )
+      );
     }
   }
-};
+});
 
 // === Workbench ===
 
@@ -77,12 +104,11 @@ let k = <div className2={"bonjour3 bonjour5 bonjour2"}>Hi</div>;
 
 const out_example = `
 let a = <div className={\`\${styles.bonjour} \${styles.bonjour2} a\`}/>;
-`
+`;
 
 const options = {
   plugins: [
-    "@babel/plugin-syntax-jsx",
-    myPlugin
+    reactTransformClassnameStringLiteralIntoCSSModules
   ]
 };
 
