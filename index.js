@@ -1,7 +1,11 @@
 const babel = require('@babel/core');
 const css = require('css');
+const {genComputeMapFilesToIdentifiers} = require("./computers");
+const {computeUsedFiles} = require("./computers");
+const {computeMapClassnamesToFilesAndIdentifiers} = require("./computers");
+const {computeMapFilesToIdentifiers} = require("./computers");
 const {OptionsDefaulter} = require("./options");
-const {createCSSModuleAttributeValue} = require("./jsCreators");
+const {createCSSModuleAttributeValue, createCSSModuleImportStatement} = require("./jsCreators");
 const {computeMapFileToClassnames, computeMapClassnamesToFiles} = require('./computers');
 const {readFilesContents} = require('./io');
 const {classnameValueASTExtractor} = require('./jsExtractors');
@@ -26,13 +30,22 @@ const toCamelCaseSoft = input =>
     );
 
 const reactTransformClassnameStringLiteralIntoCSSModules = ({types}) => ({
+
   inherits: require("@babel/plugin-syntax-jsx").default,
+
   pre(state) {
     this.optionsDefaulter = new OptionsDefaulter(state.opts);
-    const fileContents = this.optionsDefaulter.get('readFilesContents')(['styles.css']);
-    this.mapFileToClassnames = this.optionsDefaulter.get('computeMapFileToClassnames').call(this, fileContents);
+
+    const mapFileToContents = this.optionsDefaulter.get('readFilesContents')(['styles.css', 'styles2.css']);
+    this.mapFileToClassnames = this.optionsDefaulter.get('computeMapFileToClassnames').call(this, mapFileToContents);
+    this.computeMapFilesToIdentifiers = genComputeMapFilesToIdentifiers();
+
+    this.computeMapFilesToIdentifiers.next();
+    this.mapFilesToIdentifiers = [];
+
     this.types = types;
   },
+
   visitor: {
     JSXAttribute(path) {
       const attribute = path.node;
@@ -51,12 +64,28 @@ const reactTransformClassnameStringLiteralIntoCSSModules = ({types}) => ({
       }
 
       const mapClassnamesToFiles = this.optionsDefaulter.get('computeMapClassnamesToFiles')(classnames, this.mapFileToClassnames);
-      if (!Array.from(mapClassnamesToFiles.values()).find(Boolean)) {
+      if (!mapClassnamesToFiles.find(({file}) => !!file)) {
         return;
       }
 
-      attribute.value = this.optionsDefaulter.get('createCSSModuleAttributeValue').call(this, mapClassnamesToFiles);
+      const usedFiles = computeUsedFiles(mapClassnamesToFiles);
+      this.mapFilesToIdentifiers = this.computeMapFilesToIdentifiers.next(usedFiles).value;
+
+      const mapClassnamesToFilesAndIdentifiers = computeMapClassnamesToFilesAndIdentifiers(
+        mapClassnamesToFiles,
+        this.mapFilesToIdentifiers
+      );
+
+      attribute.value = this.optionsDefaulter.get('createCSSModuleAttributeValue')
+        .call(this, mapClassnamesToFilesAndIdentifiers);
     }
+  },
+
+  post() {
+    this.file.ast.program.body.unshift(
+      ...this.optionsDefaulter.get('createCSSModuleImportStatements')
+        .call(this, this.mapFilesToIdentifiers)
+    );
   }
 });
 
@@ -69,7 +98,8 @@ let b = <div className={'bonjour2'}>Hi</div>;
 let c = <div className='bonjour3'/>;
 let d = <div className={1}>Hi</div>;
 let e = <div className={"bonjour4"}>Hi</div>;
-let f = <div className2={"hello"}>Hi</div>;
+let f = <div className={"hello"}>Hi</div>;
+let f2 = <div className2={"hello"}>Hi</div>;
 let g = <div className={'hello-everyone'}>Hi</div>;
 let h = <div className={"bonjour5"}>Hi</div>;
 let i = <div className={"a bonjour5 b c  d bonjour2  e"}>Hi</div>;
@@ -78,6 +108,7 @@ let k = <div className2={"bonjour3 bonjour5 bonjour2"}>Hi</div>;
 `;
 
 const out_example = `
+import foo from 'bar';
 let a = <div className={\`\${styles.bonjour} \${styles.bonjour2} a\`}/>;
 `;
 
@@ -116,7 +147,7 @@ console.log(out);
 /*
 console.log(
   JSON.stringify(
-    parsed_out_example.program.body[0].declarations[0].init,
+    parsed_out_example,
     null,
     4
   )

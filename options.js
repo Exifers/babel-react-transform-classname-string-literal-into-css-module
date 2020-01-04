@@ -1,3 +1,4 @@
+const {createCSSModuleImportStatements} = require("./jsCreators");
 const {classnamesCSSASTExtractor} = require("./cssExtractors");
 const {createCSSModuleAttributeValue} = require("./jsCreators");
 const {computeMapClassnamesToFiles} = require("./computers");
@@ -8,6 +9,7 @@ const {readFilesContents} = require("./io");
 const defaultOptions = {
   // AST creators
   createCSSModuleAttributeValue: createCSSModuleAttributeValue,
+  createCSSModuleImportStatements: createCSSModuleImportStatements,
 
   // AST extractors
   classnameValueASTExtractor: classnameValueASTExtractor,

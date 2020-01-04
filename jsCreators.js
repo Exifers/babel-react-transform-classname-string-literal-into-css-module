@@ -2,18 +2,18 @@ function createCSSModuleAttributeValue(mapClassnamesToFiles) {
   const t = this.types;
 
   // handle single classname case
-  if (mapClassnamesToFiles.size === 1) {
+  if (mapClassnamesToFiles.length === 1) {
     return t.JSXExpressionContainer(
       t.MemberExpression(
-        t.Identifier('styles'),
-        t.Identifier(Array.from(mapClassnamesToFiles.keys())[0])
+        t.Identifier(mapClassnamesToFiles[0].identifier),
+        t.Identifier(mapClassnamesToFiles[0].classname)
       )
     );
   }
 
   // calculate template literal
-  const templateElementsValues = Array.from(mapClassnamesToFiles.entries())
-    .map(([classname, file]) => file ? '|' : classname)
+  const templateElementsValues = mapClassnamesToFiles
+    .map(({classname, file}) => file ? '|' : classname)
     .join(' ')
     .split('|');
 
@@ -22,14 +22,24 @@ function createCSSModuleAttributeValue(mapClassnamesToFiles) {
     t.TemplateLiteral(
       templateElementsValues
         .map(value => t.TemplateElement({raw: value, cooked: value})),
-      Array.from(mapClassnamesToFiles.keys())
-        .filter(classname => !!mapClassnamesToFiles.get(classname))
-        .map(classname => t.MemberExpression(
-          t.Identifier('styles'),
-          t.Identifier(classname))
+      mapClassnamesToFiles
+        .filter(({file}) => !!file)
+        .map(({classname, identifier}) => t.MemberExpression(
+          t.Identifier(identifier),
+          t.Identifier(classname)
+          )
         )
     )
   );
 }
 
-module.exports = {createCSSModuleAttributeValue};
+function createCSSModuleImportStatements(mapFilestoIdentifiers) {
+  const t = this.types;
+  return mapFilestoIdentifiers.map(
+    ({identifier: specifier, file: source}) => (
+      t.ImportDeclaration([t.ImportDefaultSpecifier(t.Identifier(specifier))], t.StringLiteral(source))
+    )
+  )
+}
+
+module.exports = {createCSSModuleAttributeValue, createCSSModuleImportStatements};
