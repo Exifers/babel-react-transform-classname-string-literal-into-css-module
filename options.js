@@ -18,8 +18,21 @@ const defaultOptions = {
   // functional
   readFilesContents: readFilesContents,
   computeMapFileToClassnames: computeMapFileToClassnames,
-  computeMapClassnamesToFiles: computeMapClassnamesToFiles
+  computeMapClassnamesToFiles: computeMapClassnamesToFiles,
+
+  localsConvention: 'camelCase'
 };
+
+const shortcuts = [
+  {
+    optionKey: 'localsConvention',
+    values: {
+      'camelCase': _ => _,
+      'camelCaseKeepFirstCharCase': _ => _,
+      'pascalCase': _ => _
+    }
+  }
+];
 
 class OptionsDefaulter {
   constructor(userOptions) {
@@ -27,7 +40,21 @@ class OptionsDefaulter {
   }
 
   get(optionKey) {
-    return this.userOptions[optionKey] || defaultOptions[optionKey];
+    const optionValue = this.userOptions[optionKey] || defaultOptions[optionKey];
+    return this.processShortcuts(optionKey, optionValue);
+  }
+
+  processShortcuts(optionKey, optionValue) {
+    if (typeof optionKey !== 'string') {
+      return optionValue;
+    }
+
+    const shortcut = shortcuts.find(shortcut => shortcut.optionKey === optionKey);
+    if (!shortcut) {
+      return optionValue;
+    }
+
+    return shortcut.values[optionValue] || optionValue;
   }
 }
 
