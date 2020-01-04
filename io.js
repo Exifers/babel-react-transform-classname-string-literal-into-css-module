@@ -1,7 +1,7 @@
 const path = require('path');
 const fs = require('fs');
 
-const readFiles = (fileRelPaths) => {
+const readFilesContents = (fileRelPaths) => {
   let fileContents = [];
   for (const fileRelPath of fileRelPaths) {
     // reading file
@@ -13,4 +13,4 @@ const readFiles = (fileRelPaths) => {
   return fileContents;
 };
 
-module.exports = {readFiles};
+module.exports = {readFilesContents};

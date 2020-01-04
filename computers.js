@@ -1,11 +1,11 @@
 const css = require("css");
 const {classnamesCSSASTExtractor} = require('./cssExtractors');
 
-const computeMapFileToClassnames = (fileContents) => {
+function computeMapFileToClassnames(fileContents) {
   let mapFileToClassnames = new Map();
   for (const fileContent of fileContents) {
     const parsed = css.parse(fileContent);
-    mapFileToClassnames.set(fileContent, classnamesCSSASTExtractor(parsed));
+    mapFileToClassnames.set(fileContent, this.optionsDefaulter.get('classnamesCSSASTExtractor')(parsed));
   }
   return mapFileToClassnames;
 };

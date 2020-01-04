@@ -1,7 +1,9 @@
 const babel = require('@babel/core');
 const css = require('css');
+const {OptionsDefaulter} = require("./options");
+const {createCSSModuleAttributeValue} = require("./jsCreators");
 const {computeMapFileToClassnames, computeMapClassnamesToFiles} = require('./computers');
-const {readFiles} = require('./io');
+const {readFilesContents} = require('./io');
 const {classnameValueASTExtractor} = require('./jsExtractors');
 
 //TODO: camelization, import, extract classname from selector
@@ -23,11 +25,13 @@ const toCamelCaseSoft = input =>
       ''
     );
 
-const reactTransformClassnameStringLiteralIntoCSSModules = ({types: t}) => ({
+const reactTransformClassnameStringLiteralIntoCSSModules = ({types}) => ({
   inherits: require("@babel/plugin-syntax-jsx").default,
-  pre() {
-    const fileContents = readFiles(['styles.css']);
-    this.mapFileToClassnames = computeMapFileToClassnames(fileContents);
+  pre(state) {
+    this.optionsDefaulter = new OptionsDefaulter(state.opts);
+    const fileContents = this.optionsDefaulter.get('readFilesContents')(['styles.css']);
+    this.mapFileToClassnames = this.optionsDefaulter.get('computeMapFileToClassnames').call(this, fileContents);
+    this.types = types;
   },
   visitor: {
     JSXAttribute(path) {
@@ -36,7 +40,7 @@ const reactTransformClassnameStringLiteralIntoCSSModules = ({types: t}) => ({
         return;
       }
 
-      const classnameValue = classnameValueASTExtractor(attribute);
+      const classnameValue = this.optionsDefaulter.get('classnameValueASTExtractor')(attribute);
       if (!classnameValue) {
         return;
       }
@@ -46,41 +50,12 @@ const reactTransformClassnameStringLiteralIntoCSSModules = ({types: t}) => ({
         return;
       }
 
-      const mapClassnamesToFiles = computeMapClassnamesToFiles(classnames, this.mapFileToClassnames);
+      const mapClassnamesToFiles = this.optionsDefaulter.get('computeMapClassnamesToFiles')(classnames, this.mapFileToClassnames);
       if (!Array.from(mapClassnamesToFiles.values()).find(Boolean)) {
         return;
       }
 
-      // handle single classname case
-      if (mapClassnamesToFiles.size === 1) {
-        attribute.value = t.JSXExpressionContainer(
-          t.MemberExpression(
-            t.Identifier('styles'),
-            t.Identifier(Array.from(mapClassnamesToFiles.keys())[0])
-          )
-        );
-        return;
-      }
-
-      // calculate template literal
-      const templateElementsValues = Array.from(mapClassnamesToFiles.entries())
-        .map(([classname, file]) => file ? '|' : classname)
-        .join(' ')
-        .split('|');
-
-      // handle multiple classnames case
-      attribute.value = t.JSXExpressionContainer(
-        t.TemplateLiteral(
-          templateElementsValues
-            .map(value => t.TemplateElement({raw: value, cooked: value})),
-          Array.from(mapClassnamesToFiles.keys())
-            .filter(classname => !!mapClassnamesToFiles.get(classname))
-            .map(classname => t.MemberExpression(
-              t.Identifier('styles'),
-              t.Identifier(classname))
-            )
-        )
-      );
+      attribute.value = this.optionsDefaulter.get('createCSSModuleAttributeValue').call(this, mapClassnamesToFiles);
     }
   }
 });
