@@ -1,4 +1,5 @@
 const k = require("./keys");
+const {addPathsToClassnames} = require("./computers");
 const {genComputeMapFilesToIdentifiers} = require("./computers");
 const {addPropertyIdentifierToClassnames} = require("./computers");
 const {addObjectIdentifierToClassnames} = require("./computers");
@@ -6,7 +7,7 @@ const {toCamelCaseSoft} = require("./cases");
 const {createCSSModuleImportStatements} = require("./jsCreators");
 const {classnamesCSSASTExtractor} = require("./cssExtractors");
 const {createCSSModuleAttributeValue} = require("./jsCreators");
-const {computeMapClassnamesToFiles} = require("./computers");
+const {computeMapClassnamesToFiles: addFilesToClassnames} = require("./computers");
 const {classnameValueASTExtractor} = require("./jsExtractors");
 const {computeMapFileToClassnames} = require("./computers");
 const {readFilesContents} = require("./io");
@@ -23,11 +24,15 @@ const defaultOptions = {
   // functional
   [k.readFilesContents]: readFilesContents,
   [k.computeMapFileToClassnames]: computeMapFileToClassnames,
-  [k.addFilesToClassnames]: computeMapClassnamesToFiles,
+  [k.addFilesToClassnames]: addFilesToClassnames,
   [k.addObjectIdentifierToClassnames]: addObjectIdentifierToClassnames,
   [k.addPropertyIdentifierToClassnames]: addPropertyIdentifierToClassnames,
   [k.genComputeMapFilesToIdentifiers]: genComputeMapFilesToIdentifiers,
+  [k.addPathsToClassnames]: addPathsToClassnames,
+
+  // paths
   [k.filesPaths]: [],
+  [k.jsxFilePath]: '',
 
   [k.computeLocalClassnameValue]: k.camelCaseKeepFirstCharCase
 };

@@ -10,13 +10,16 @@ let keys = {
   addObjectIdentifierToClassnames: '',
   addPropertyIdentifierToClassnames: '',
   genComputeMapFilesToIdentifiers: '',
+  addPathsToClassnames: '',
 
   // cases
   camelCase: '',
   camelCaseKeepFirstCharCase: '',
   pascalCase: '',
 
-  filesPaths: ''
+  // paths
+  filesPaths: '',
+  jsxFilePath: ''
 };
 
 

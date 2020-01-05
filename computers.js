@@ -1,4 +1,5 @@
 const css = require("css");
+const path = require("path");
 const k = require("./keys");
 const {classnamesCSSASTExtractor} = require('./cssExtractors');
 
@@ -38,7 +39,7 @@ function computeFileFromClassname(classname) {
   return Array.from(matched.keys())[0];
 };
 
-function computeMapClassnamesToFiles(classnames) {
+function addFilesToClassnames(classnames) {
   return classnames.map(entry => ({
     ...entry,
     file: computeFileFromClassname.call(this, entry.classname)
@@ -84,11 +85,22 @@ function addPropertyIdentifierToClassnames(classnames) {
   }))
 }
 
+function addPathsToClassnames(classnames) {
+  const jsxFilePath = this.optionsDefaulter.get(k.jsxFilePath);
+  return classnames.map(entry => ({
+    ...entry,
+    ...(entry.file ? {
+      path: path.relative(path.dirname(jsxFilePath), entry.file)
+    } : {})
+  }))
+}
+
 module.exports = {
   computeMapFileToClassnames,
-  computeMapClassnamesToFiles,
+  computeMapClassnamesToFiles: addFilesToClassnames,
   genComputeMapFilesToIdentifiers,
   addObjectIdentifierToClassnames,
   computeUsedFiles,
-  addPropertyIdentifierToClassnames
+  addPropertyIdentifierToClassnames,
+  addPathsToClassnames
 };

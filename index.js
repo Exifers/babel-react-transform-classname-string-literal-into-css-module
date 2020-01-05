@@ -9,8 +9,8 @@ function reactTransformClassnameStringLiteralIntoCSSModules({types}) {
   return {
     inherits: require("@babel/plugin-syntax-jsx").default,
 
-    pre(state) {
-      this.optionsDefaulter = new OptionsDefaulter(state.opts);
+    pre() {
+      this.optionsDefaulter = new OptionsDefaulter(this.opts);
 
       const filesPaths = resolveFilesPaths();
       const mapFileToContents = this.optionsDefaulter.get(k.readFilesContents)(this.optionsDefaulter.get(k.filesPaths));
@@ -24,7 +24,7 @@ function reactTransformClassnameStringLiteralIntoCSSModules({types}) {
     },
 
     visitor: {
-      JSXAttribute(path) {
+      JSXAttribute(path, state) {
         const attribute = path.node;
         if (attribute.name.name !== 'className') {
           return;
@@ -51,6 +51,8 @@ function reactTransformClassnameStringLiteralIntoCSSModules({types}) {
         classnames = this.optionsDefaulter.get(k.addObjectIdentifierToClassnames).call(this, classnames);
 
         classnames = this.optionsDefaulter.get(k.addPropertyIdentifierToClassnames).call(this, classnames);
+
+        classnames = this.optionsDefaulter.get(k.addPathsToClassnames).call(this, classnames);
 
         attribute.value = this.optionsDefaulter.get(k.createCSSModuleAttributeValue)
           .call(this, classnames);
