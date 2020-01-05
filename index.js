@@ -2,32 +2,11 @@ const babel = require('@babel/core');
 const css = require('css');
 const {genComputeMapFilesToIdentifiers} = require("./computers");
 const {computeUsedFiles} = require("./computers");
-const {computeMapClassnamesToFilesAndIdentifiers} = require("./computers");
-const {computeMapFilesToIdentifiers} = require("./computers");
+const {addObjectIdentifierToClassnames, addPropertyIdentifierToClassnames} = require("./computers");
 const {OptionsDefaulter} = require("./options");
-const {createCSSModuleAttributeValue, createCSSModuleImportStatement} = require("./jsCreators");
-const {computeMapFileToClassnames, computeMapClassnamesToFiles} = require('./computers');
-const {readFilesContents} = require('./io');
-const {classnameValueASTExtractor} = require('./jsExtractors');
+const k = require('./keys');
 
 //TODO: camelization, import, extract classname from selector
-
-// Convert CSS classname into CSS module classname
-// This basically converts into camel case but keeping the original case
-// of the first letter
-const toCamelCaseSoft = input =>
-  input
-    .split(/[\-.]+/)
-    .filter(s => s.length)
-    .reduce(
-      (a, c, i) =>
-        i === 0
-          ? a + c
-          : !!a.match(/[a-zA-Z0-9]$/)
-          ? a + c[0].toUpperCase() + c.substring(1)
-          : a + c,
-      ''
-    );
 
 const reactTransformClassnameStringLiteralIntoCSSModules = ({types}) => ({
 
@@ -36,9 +15,9 @@ const reactTransformClassnameStringLiteralIntoCSSModules = ({types}) => ({
   pre(state) {
     this.optionsDefaulter = new OptionsDefaulter(state.opts);
 
-    const mapFileToContents = this.optionsDefaulter.get('readFilesContents')(['styles.css', 'styles2.css']);
-    this.mapFileToClassnames = this.optionsDefaulter.get('computeMapFileToClassnames').call(this, mapFileToContents);
-    this.computeMapFilesToIdentifiers = genComputeMapFilesToIdentifiers();
+    const mapFileToContents = this.optionsDefaulter.get(k.readFilesContents)(['styles.css', 'styles2.css']);
+    this.mapFileToClassnames = this.optionsDefaulter.get(k.computeMapFileToClassnames).call(this, mapFileToContents);
+    this.computeMapFilesToIdentifiers = this.optionsDefaulter.get(k.genComputeMapFilesToIdentifiers)();
 
     this.computeMapFilesToIdentifiers.next();
     this.mapFilesToIdentifiers = [];
@@ -53,37 +32,36 @@ const reactTransformClassnameStringLiteralIntoCSSModules = ({types}) => ({
         return;
       }
 
-      const classnameValue = this.optionsDefaulter.get('classnameValueASTExtractor')(attribute);
+      const classnameValue = this.optionsDefaulter.get(k.classnameValueASTExtractor)(attribute);
       if (!classnameValue) {
         return;
       }
 
-      const classnames = classnameValue.split(' ').filter(Boolean);
+      let classnames = classnameValue.split(' ').filter(Boolean).map(classname => ({classname}));
       if (classnames.length === 0) {
         return;
       }
 
-      const mapClassnamesToFiles = this.optionsDefaulter.get('computeMapClassnamesToFiles')(classnames, this.mapFileToClassnames);
-      if (!mapClassnamesToFiles.find(({file}) => !!file)) {
+      classnames = this.optionsDefaulter.get(k.addFilesToClassnames).call(this, classnames);
+      if (!classnames.find(({file}) => !!file)) {
         return;
       }
 
-      const usedFiles = computeUsedFiles(mapClassnamesToFiles);
+      const usedFiles = computeUsedFiles(classnames);
       this.mapFilesToIdentifiers = this.computeMapFilesToIdentifiers.next(usedFiles).value;
 
-      const mapClassnamesToFilesAndIdentifiers = computeMapClassnamesToFilesAndIdentifiers(
-        mapClassnamesToFiles,
-        this.mapFilesToIdentifiers
-      );
+      classnames = this.optionsDefaulter.get(k.addObjectIdentifierToClassnames).call(this, classnames);
 
-      attribute.value = this.optionsDefaulter.get('createCSSModuleAttributeValue')
-        .call(this, mapClassnamesToFilesAndIdentifiers);
+      classnames= this.optionsDefaulter.get(k.addPropertyIdentifierToClassnames).call(this, classnames);
+
+      attribute.value = this.optionsDefaulter.get(k.createCSSModuleAttributeValue)
+        .call(this, classnames);
     }
   },
 
   post() {
     this.file.ast.program.body.unshift(
-      ...this.optionsDefaulter.get('createCSSModuleImportStatements')
+      ...this.optionsDefaulter.get(k.createCSSModuleImportStatements)
         .call(this, this.mapFilesToIdentifiers)
     );
   }

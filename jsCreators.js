@@ -5,8 +5,8 @@ function createCSSModuleAttributeValue(mapClassnamesToFiles) {
   if (mapClassnamesToFiles.length === 1) {
     return t.JSXExpressionContainer(
       t.MemberExpression(
-        t.Identifier(mapClassnamesToFiles[0].identifier),
-        t.Identifier(mapClassnamesToFiles[0].classname)
+        t.Identifier(mapClassnamesToFiles[0].objectIdentifier),
+        t.Identifier(mapClassnamesToFiles[0].propertyIdentifier)
       )
     );
   }
@@ -24,9 +24,9 @@ function createCSSModuleAttributeValue(mapClassnamesToFiles) {
         .map(value => t.TemplateElement({raw: value, cooked: value})),
       mapClassnamesToFiles
         .filter(({file}) => !!file)
-        .map(({classname, identifier}) => t.MemberExpression(
-          t.Identifier(identifier),
-          t.Identifier(classname)
+        .map(({propertyIdentifier, objectIdentifier}) => t.MemberExpression(
+          t.Identifier(objectIdentifier),
+          t.Identifier(propertyIdentifier)
           )
         )
     )

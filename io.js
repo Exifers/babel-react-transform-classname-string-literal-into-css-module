@@ -8,7 +8,7 @@ const readFilesContents = (fileRelPaths) => {
     const filePath = path.join(__dirname, fileRelPath);
     const code = fs.readFileSync(filePath, 'utf-8');
 
-    fileContents.push({file:filePath, content:code});
+    fileContents.push({file:fileRelPath, content:code});
   }
   return fileContents;
 };

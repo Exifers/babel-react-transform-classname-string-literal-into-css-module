@@ -1,4 +1,5 @@
 const css = require("css");
+const k = require("./keys");
 const {classnamesCSSASTExtractor} = require('./cssExtractors');
 
 function computeMapFileToClassnames(mapFilesToContents) {
@@ -10,7 +11,8 @@ function computeMapFileToClassnames(mapFilesToContents) {
   return mapFileToClassnames;
 };
 
-const computeFileFromClassname = (classname, mapFileToClassnames) => {
+function computeFileFromClassname(classname) {
+  const mapFileToClassnames = this.mapFileToClassnames;
   const matched = new Map();
 
   for (const [file, classnames] of mapFileToClassnames.entries()) {
@@ -36,16 +38,11 @@ const computeFileFromClassname = (classname, mapFileToClassnames) => {
   return Array.from(matched.keys())[0];
 };
 
-const computeMapClassnamesToFiles = (classnames, mapFileToClassnames) => {
-  const mapClassnamesToFiles = [];
-  for (const classname of classnames) {
-    const fileRelPath = computeFileFromClassname(
-      classname,
-      mapFileToClassnames
-    );
-    mapClassnamesToFiles.push({classname, file: fileRelPath}); // null if file not found
-  }
-  return mapClassnamesToFiles;
+function computeMapClassnamesToFiles(classnames) {
+  return classnames.map(entry => ({
+    ...entry,
+    file: computeFileFromClassname.call(this, entry.classname)
+  }))
 };
 
 function *genComputeMapFilesToIdentifiers() {
@@ -70,12 +67,20 @@ function computeUsedFiles(mapClassnamesToFiles) {
     .filter((file, index, array) => array.indexOf(file) === index)
 }
 
-function computeMapClassnamesToFilesAndIdentifiers(mapClassnamesToFiles, mapFilesToIdentifiers) {
-  return mapClassnamesToFiles.map(entry => ({
+function addObjectIdentifierToClassnames(classnames) {
+  const mapFilesToIdentifiers = this.mapFilesToIdentifiers;
+  return classnames.map(entry => ({
     ...entry,
     ...(
-      entry.file ? {identifier: mapFilesToIdentifiers.find(({file}) => file === entry.file).identifier} : {}
+      entry.file ? {objectIdentifier: mapFilesToIdentifiers.find(({file}) => file === entry.file).identifier} : {}
     )
+  }))
+}
+
+function addPropertyIdentifierToClassnames(classnames) {
+  return classnames.map(entry => ({
+    ...entry,
+    propertyIdentifier: this.optionsDefaulter.get(k.computeLocalClassnameValue)(entry.classname)
   }))
 }
 
@@ -83,6 +88,7 @@ module.exports = {
   computeMapFileToClassnames,
   computeMapClassnamesToFiles,
   genComputeMapFilesToIdentifiers,
-  computeMapClassnamesToFilesAndIdentifiers,
-  computeUsedFiles
+  addObjectIdentifierToClassnames,
+  computeUsedFiles,
+  addPropertyIdentifierToClassnames
 };

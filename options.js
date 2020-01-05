@@ -1,3 +1,8 @@
+const k = require("./keys");
+const {genComputeMapFilesToIdentifiers} = require("./computers");
+const {addPropertyIdentifierToClassnames} = require("./computers");
+const {addObjectIdentifierToClassnames} = require("./computers");
+const {toCamelCaseSoft} = require("./cases");
 const {createCSSModuleImportStatements} = require("./jsCreators");
 const {classnamesCSSASTExtractor} = require("./cssExtractors");
 const {createCSSModuleAttributeValue} = require("./jsCreators");
@@ -8,28 +13,31 @@ const {readFilesContents} = require("./io");
 
 const defaultOptions = {
   // AST creators
-  createCSSModuleAttributeValue: createCSSModuleAttributeValue,
-  createCSSModuleImportStatements: createCSSModuleImportStatements,
+  [k.createCSSModuleAttributeValue]: createCSSModuleAttributeValue,
+  [k.createCSSModuleImportStatements]: createCSSModuleImportStatements,
 
   // AST extractors
-  classnameValueASTExtractor: classnameValueASTExtractor,
-  classnamesCSSASTExtractor: classnamesCSSASTExtractor,
+  [k.classnameValueASTExtractor]: classnameValueASTExtractor,
+  [k.classnamesCSSASTExtractor]: classnamesCSSASTExtractor,
 
   // functional
-  readFilesContents: readFilesContents,
-  computeMapFileToClassnames: computeMapFileToClassnames,
-  computeMapClassnamesToFiles: computeMapClassnamesToFiles,
+  [k.readFilesContents]: readFilesContents,
+  [k.computeMapFileToClassnames]: computeMapFileToClassnames,
+  [k.addFilesToClassnames]: computeMapClassnamesToFiles,
+  [k.addObjectIdentifierToClassnames]: addObjectIdentifierToClassnames,
+  [k.addPropertyIdentifierToClassnames]: addPropertyIdentifierToClassnames,
+  [k.genComputeMapFilesToIdentifiers]: genComputeMapFilesToIdentifiers,
 
-  localsConvention: 'camelCase'
+  [k.computeLocalClassnameValue]: k.camelCaseKeepFirstCharCase
 };
 
-const shortcuts = [
+const references = [
   {
-    optionKey: 'localsConvention',
+    optionKey: k.computeLocalClassnameValue,
     values: {
-      'camelCase': _ => _,
-      'camelCaseKeepFirstCharCase': _ => _,
-      'pascalCase': _ => _
+      [k.camelCase]: _ => _,
+      [k.camelCaseKeepFirstCharCase]: toCamelCaseSoft,
+      [k.pascalCase]: _ => _
     }
   }
 ];
@@ -41,20 +49,20 @@ class OptionsDefaulter {
 
   get(optionKey) {
     const optionValue = this.userOptions[optionKey] || defaultOptions[optionKey];
-    return this.processShortcuts(optionKey, optionValue);
+    return this.processReferences(optionKey, optionValue);
   }
 
-  processShortcuts(optionKey, optionValue) {
+  processReferences(optionKey, optionValue) {
     if (typeof optionKey !== 'string') {
       return optionValue;
     }
 
-    const shortcut = shortcuts.find(shortcut => shortcut.optionKey === optionKey);
-    if (!shortcut) {
+    const reference = references.find(reference => reference.optionKey === optionKey);
+    if (!reference) {
       return optionValue;
     }
 
-    return shortcut.values[optionValue] || optionValue;
+    return reference.values[optionValue] || optionValue;
   }
 }
 
