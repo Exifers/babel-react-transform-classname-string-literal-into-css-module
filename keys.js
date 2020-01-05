@@ -14,7 +14,9 @@ let keys = {
   // cases
   camelCase: '',
   camelCaseKeepFirstCharCase: '',
-  pascalCase: ''
+  pascalCase: '',
+
+  filesPaths: ''
 };
 
 

@@ -27,6 +27,7 @@ const defaultOptions = {
   [k.addObjectIdentifierToClassnames]: addObjectIdentifierToClassnames,
   [k.addPropertyIdentifierToClassnames]: addPropertyIdentifierToClassnames,
   [k.genComputeMapFilesToIdentifiers]: genComputeMapFilesToIdentifiers,
+  [k.filesPaths]: [],
 
   [k.computeLocalClassnameValue]: k.camelCaseKeepFirstCharCase
 };
