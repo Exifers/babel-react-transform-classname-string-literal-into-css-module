@@ -34,7 +34,9 @@ const defaultOptions = {
   [k.filesPaths]: [],
   [k.jsxFilePath]: '',
 
-  [k.computeLocalClassnameValue]: k.camelCaseKeepFirstCharCase
+  [k.computeLocalClassnameValue]: k.camelCaseKeepFirstCharCase,
+
+  [k.debug]: false
 };
 
 const references = [

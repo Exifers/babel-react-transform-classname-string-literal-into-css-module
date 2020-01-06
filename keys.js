@@ -19,12 +19,23 @@ let keys = {
 
   // paths
   filesPaths: '',
-  jsxFilePath: ''
+  jsxFilePath: '',
+
+  debug: '',
+
+  // debug namespaces keys
+  prepare: '',
+  parse: '',
+  extract: '',
+  compute: '',
+  create: ''
 };
 
 
 for (const [key] of Object.entries(keys)) {
-  keys[key] = key;
+  if (!keys[key]) {
+    keys[key] = key;
+  }
 }
 
 module.exports = keys;
