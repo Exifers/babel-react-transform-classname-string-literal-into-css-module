@@ -1,7 +1,6 @@
 const {computeUsedFiles} = require("./computers");
 const {OptionsDefaulter} = require("./options");
 const k = require('./keys');
-const {resolveFilesPaths} = require("./resolver");
 const _ = require('./debug');
 
 //TODO: extract classname properly from selector
@@ -16,19 +15,12 @@ function reactTransformClassnameStringLiteralIntoCSSModules({types}) {
       if (this.optionsDefaulter.get(k.debug)) {
         _.enable()
       }
-
-      _.log(1, k.prepare, 'Resolving paths');
-      const filesPaths = resolveFilesPaths();
-
-      _.log(1, k.prepare, 'Reading styles files');
-      const mapFileToContents = this.optionsDefaulter.get(k.readFilesContents)(this.optionsDefaulter.get(k.filesPaths));
-
-      _.log(1, k.prepare, 'Collecting classes');
-      this.mapFileToClassnames = this.optionsDefaulter.get(k.computeMapFileToClassnames).call(this, mapFileToContents);
+      _.log(1, k.prepare, 'Reading options');
+      this.stylesFilesData = this.optionsDefaulter.get(k.stylesFilesData);
 
       this.computeMapFilesToIdentifiers = this.optionsDefaulter.get(k.genComputeMapFilesToIdentifiers)();
       this.computeMapFilesToIdentifiers.next();
-      this.mapFilesToIdentifiers = [];
+      this.mapPathsToIdentifiers = [];
 
       this.types = types;
     },
@@ -64,12 +56,16 @@ function reactTransformClassnameStringLiteralIntoCSSModules({types}) {
           return;
         }
 
+        _.log(2, k.compute, 'Adding paths to classnames');
+        classnames = this.optionsDefaulter.get(k.addPathsToClassnames).call(this, classnames);
+        _.log(2, k.compute, 'Got %s', classnames);
+
         _.log(0, k.compute, 'Computing used files');
-        const usedFiles = computeUsedFiles(classnames);
-        _.log(0, k.compute, 'Got %s', usedFiles);
+        const usedPaths = computeUsedFiles(classnames);
+        _.log(0, k.compute, 'Got %s', usedPaths);
         _.log(1, k.compute, 'Computing files identifiers');
-        this.mapFilesToIdentifiers = this.computeMapFilesToIdentifiers.next(usedFiles).value;
-        _.log(1, k.compute, 'Got %s', this.mapFilesToIdentifiers);
+        this.mapPathsToIdentifiers = this.computeMapFilesToIdentifiers.next(usedPaths).value;
+        _.log(1, k.compute, 'Got %s', this.mapPathsToIdentifiers);
 
         _.log(0, k.compute, 'Adding object identifiers to classnames');
         classnames = this.optionsDefaulter.get(k.addObjectIdentifierToClassnames).call(this, classnames);
@@ -78,10 +74,6 @@ function reactTransformClassnameStringLiteralIntoCSSModules({types}) {
         _.log(0, k.compute, 'Adding property identifiers to classnames');
         classnames = this.optionsDefaulter.get(k.addPropertyIdentifierToClassnames).call(this, classnames);
         _.log(0, k.compute, 'Got %s', classnames);
-
-        _.log(2, k.compute, 'Adding paths to classnames');
-        classnames = this.optionsDefaulter.get(k.addPathsToClassnames).call(this, classnames);
-        _.log(2, k.compute, 'Got %s', classnames);
 
         _.log(1, k.create, 'Creating and inserting AST');
         attribute.value = this.optionsDefaulter.get(k.createCSSModuleAttributeValue)
@@ -93,7 +85,7 @@ function reactTransformClassnameStringLiteralIntoCSSModules({types}) {
       _.log(1, k.create, 'Creating and inserting AST for import statements');
       this.file.ast.program.body.unshift(
         ...this.optionsDefaulter.get(k.createCSSModuleImportStatements)
-          .call(this, this.mapFilesToIdentifiers)
+          .call(this, this.mapPathsToIdentifiers)
       );
     }
   }

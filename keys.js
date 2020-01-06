@@ -1,33 +1,35 @@
 let keys = {
   createCSSModuleAttributeValue: '',
   createCSSModuleImportStatements: '',
+
   classnameValueASTExtractor: '',
-  classnamesCSSASTExtractor: '',
-  readFilesContents: '',
-  computeMapFileToClassnames: '',
-  addFilesToClassnames: '',
+
   computeLocalClassnameValue: '',
+
+  genComputeMapFilesToIdentifiers: '',
+
+  addFilesToClassnames: '',
   addObjectIdentifierToClassnames: '',
   addPropertyIdentifierToClassnames: '',
-  genComputeMapFilesToIdentifiers: '',
   addPathsToClassnames: '',
+
+  jsxFilePath: '',
+  stylesFilesData: '',
 
   // cases
   camelCase: '',
   camelCaseKeepFirstCharCase: '',
+
   pascalCase: '',
 
-  // paths
-  filesPaths: '',
-  jsxFilePath: '',
-
+  // debug
   debug: '',
-
   // debug namespaces keys
   prepare: '',
   parse: '',
   extract: '',
   compute: '',
+
   create: ''
 };
 

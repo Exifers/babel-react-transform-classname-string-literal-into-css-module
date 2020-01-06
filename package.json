@@ -6,7 +6,6 @@
   "license": "MIT",
   "dependencies": {
     "@babel/plugin-syntax-jsx": "^7.7.4",
-    "chalk": "^3.0.0",
     "css": "^2.2.4",
     "labelled-logger": "^1.0.1"
   }

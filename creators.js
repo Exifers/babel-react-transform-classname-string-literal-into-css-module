@@ -33,10 +33,10 @@ function createCSSModuleAttributeValue(mapClassnamesToFiles) {
   );
 }
 
-function createCSSModuleImportStatements(mapFilestoIdentifiers) {
+function createCSSModuleImportStatements(mapPathsToIdentifiers) {
   const t = this.types;
-  return mapFilestoIdentifiers.map(
-    ({identifier: specifier, file: source}) => (
+  return mapPathsToIdentifiers.map(
+    ({identifier: specifier, path: source}) => (
       t.ImportDeclaration([t.ImportDefaultSpecifier(t.Identifier(specifier))], t.StringLiteral(source))
     )
   )

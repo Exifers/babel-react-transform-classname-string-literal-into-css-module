@@ -1,25 +1,15 @@
 const css = require("css");
 const path = require("path");
 const k = require("./keys");
-const {classnamesCSSASTExtractor} = require('./cssExtractors');
-
-function computeMapFileToClassnames(mapFilesToContents) {
-  let mapFileToClassnames = new Map();
-  for (const {file, content} of mapFilesToContents) {
-    const parsed = css.parse(content);
-    mapFileToClassnames.set(file, this.optionsDefaulter.get('classnamesCSSASTExtractor')(parsed));
-  }
-  return mapFileToClassnames;
-};
 
 function computeFileFromClassname(classname) {
-  const mapFileToClassnames = this.mapFileToClassnames;
+  const stylesFilesData = this.stylesFilesData;
   const matched = new Map();
 
-  for (const [file, classnames] of mapFileToClassnames.entries()) {
+  for (const {path, classnames} of stylesFilesData) {
     const matchedClassnames = classnames.filter(c => c === classname);
     if (matchedClassnames.length) {
-      matched.set(file, matchedClassnames);
+      matched.set(path, matchedClassnames);
     }
   }
 
@@ -47,33 +37,33 @@ function addFilesToClassnames(classnames) {
 };
 
 function *genComputeMapFilesToIdentifiers() {
-  let filesToIdentifiers = [];
-  let newFiles = [];
+  let pathsToIdentifiers = [];
+  let newPaths = [];
   let index = 1;
   while (true) {
-    filesToIdentifiers = [
-      ...filesToIdentifiers,
-      ...newFiles
-        .filter(newFile => !filesToIdentifiers.find(({file}) => file === newFile))
-        .map(file => ({file, identifier: 'styles' + index++}))
+    pathsToIdentifiers = [
+      ...pathsToIdentifiers,
+      ...newPaths
+        .filter(newPath => !pathsToIdentifiers.find(({path}) => path === newPath))
+        .map(path => ({path, identifier: 'styles' + index++}))
     ];
-    newFiles = yield filesToIdentifiers;
+    newPaths = yield pathsToIdentifiers;
   }
 }
 
 function computeUsedFiles(mapClassnamesToFiles) {
   return mapClassnamesToFiles
-    .map(({file}) => file)
+    .map(({path}) => path)
     .filter(Boolean)
-    .filter((file, index, array) => array.indexOf(file) === index)
+    .filter((path, index, array) => array.indexOf(path) === index)
 }
 
 function addObjectIdentifierToClassnames(classnames) {
-  const mapFilesToIdentifiers = this.mapFilesToIdentifiers;
+  const mapPathsToIdentifiers = this.mapPathsToIdentifiers;
   return classnames.map(entry => ({
     ...entry,
     ...(
-      entry.file ? {objectIdentifier: mapFilesToIdentifiers.find(({file}) => file === entry.file).identifier} : {}
+      entry.path ? {objectIdentifier: mapPathsToIdentifiers.find(({path}) => path === entry.path).identifier} : {}
     )
   }))
 }
@@ -96,7 +86,6 @@ function addPathsToClassnames(classnames) {
 }
 
 module.exports = {
-  computeMapFileToClassnames,
   computeMapClassnamesToFiles: addFilesToClassnames,
   genComputeMapFilesToIdentifiers,
   addObjectIdentifierToClassnames,
