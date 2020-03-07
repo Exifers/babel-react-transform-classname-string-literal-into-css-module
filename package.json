@@ -18,5 +18,13 @@
     "extractors.js",
     "keys.js",
     "options.js"
+  ],
+  "keywords": [
+    "react",
+    "css",
+    "css-modules",
+    "babel",
+    "plugin", 
+    "transform"
   ]
 }
