@@ -36,7 +36,7 @@ const defaultOptions = {
   // ]
   [k.stylesFilesData]: [],
 
-  [k.computeLocalClassnameValue]: k.camelCaseKeepFirstCharCase,
+  [k.computeLocalClassnameValue]: k.camelCaseSoft,
 
   [k.debug]: false
 };
@@ -46,7 +46,7 @@ const references = [
     optionKey: k.computeLocalClassnameValue,
     values: {
       [k.camelCase]: _ => _,
-      [k.camelCaseKeepFirstCharCase]: toCamelCaseSoft,
+      [k.camelCaseSoft]: toCamelCaseSoft,
       [k.pascalCase]: _ => _
     }
   }

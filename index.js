@@ -3,8 +3,6 @@ const {OptionsDefaulter} = require("./options");
 const k = require('./keys');
 const _ = require('./debug');
 
-//TODO: extract classname properly from selector
-
 function reactTransformClassnameStringLiteralIntoCSSModules({types}) {
   return {
     inherits: require("@babel/plugin-syntax-jsx").default,
@@ -51,7 +49,7 @@ function reactTransformClassnameStringLiteralIntoCSSModules({types}) {
         _.log(2, k.compute, 'Adding styles files to classnames');
         classnames = this.optionsDefaulter.get(k.addFilesToClassnames).call(this, classnames);
         _.log(2, k.compute, 'Got %s', classnames);
-        if (!classnames.find(({file}) => !!file)) {
+        if (classnames.every(({file}) => !file)) {
           _.log(2, k.compute, 'No matching styles files could be found, skipping');
           return;
         }

@@ -18,7 +18,7 @@ let keys = {
 
   // cases
   camelCase: '',
-  camelCaseKeepFirstCharCase: '',
+  camelCaseSoft: '',
 
   pascalCase: '',
 

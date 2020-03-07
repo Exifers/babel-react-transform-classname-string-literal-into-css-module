@@ -1,6 +1,7 @@
 {
   "name": "babel-plugin-react-transform-classname-to-css-modules",
-  "version": "1.0.0",
+  "public": true,
+  "version": "0.1.0",
   "main": "index.js",
   "author": "Emmanuel",
   "license": "MIT",
@@ -8,5 +9,14 @@
     "@babel/plugin-syntax-jsx": "^7.7.4",
     "css": "^2.2.4",
     "labelled-logger": "^1.0.1"
-  }
+  },
+  "files": [
+    "cases.js",
+    "computers.js",
+    "creators.js",
+    "debug.js",
+    "extractors.js",
+    "keys.js",
+    "options.js"
+  ]
 }
