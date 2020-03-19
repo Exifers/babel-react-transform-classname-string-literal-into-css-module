@@ -1,12 +1,15 @@
+const k = require("./keys");
+
 function createCSSModuleAttributeValue(mapClassnamesToFiles) {
   const t = this.types;
 
   // handle single classname case
   if (mapClassnamesToFiles.length === 1) {
     return t.JSXExpressionContainer(
-      t.MemberExpression(
-        t.Identifier(mapClassnamesToFiles[0].objectIdentifier),
-        t.Identifier(mapClassnamesToFiles[0].propertyIdentifier)
+      createMemberExpression.call(
+        this,
+        mapClassnamesToFiles[0].objectIdentifier,
+        mapClassnamesToFiles[0].propertyIdentifier
       )
     );
   }
@@ -24,13 +27,29 @@ function createCSSModuleAttributeValue(mapClassnamesToFiles) {
         .map(value => t.TemplateElement({raw: value, cooked: value})),
       mapClassnamesToFiles
         .filter(({file}) => !!file)
-        .map(({propertyIdentifier, objectIdentifier}) => t.MemberExpression(
-          t.Identifier(objectIdentifier),
-          t.Identifier(propertyIdentifier)
-          )
+        .map(({propertyIdentifier, objectIdentifier}) => createMemberExpression.call(this, objectIdentifier, propertyIdentifier)
         )
     )
   );
+}
+
+function createMemberExpression(objectIdentifier, propertyIdentifier) {
+  const t = this.types;
+
+  const useComputedMemberExpression = this.optionsDefaulter.get(k.useComputedMemberExpression)
+
+  if (useComputedMemberExpression) {
+    return t.MemberExpression(
+        t.Identifier(objectIdentifier),
+        t.StringLiteral(propertyIdentifier),
+        true
+    )
+  }
+
+  return t.MemberExpression(
+      t.Identifier(objectIdentifier),
+      t.Identifier(propertyIdentifier)
+  )
 }
 
 function createCSSModuleImportStatements(mapPathsToIdentifiers) {

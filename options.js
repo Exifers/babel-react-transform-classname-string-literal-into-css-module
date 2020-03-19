@@ -36,7 +36,8 @@ const defaultOptions = {
   // ]
   [k.stylesFilesData]: [],
 
-  [k.computeLocalClassnameValue]: k.camelCaseSoft,
+  [k.computeLocalClassnameValue]: k.identity,
+  [k.useComputedMemberExpression]: true,
 
   [k.debug]: false
 };
@@ -47,7 +48,8 @@ const references = [
     values: {
       [k.camelCase]: _ => _,
       [k.camelCaseSoft]: toCamelCaseSoft,
-      [k.pascalCase]: _ => _
+      [k.pascalCase]: _ => _,
+      [k.identity]: _ => _
     }
   }
 ];

@@ -30,7 +30,10 @@ let keys = {
   extract: '',
   compute: '',
 
-  create: ''
+  create: '',
+  identity: '',
+
+  useComputedMemberExpression: ''
 };
 
 
