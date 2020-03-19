@@ -81,10 +81,12 @@ function reactTransformClassnameStringLiteralIntoCSSModules({types}) {
 
     post() {
       _.log(1, k.create, 'Creating and inserting AST for import statements');
-      this.file.ast.program.body.unshift(
-        ...this.optionsDefaulter.get(k.createCSSModuleImportStatements)
-          .call(this, this.mapPathsToIdentifiers)
-      );
+      const importStatements = this.optionsDefaulter.get(k.createCSSModuleImportStatements)
+          .call(this, this.mapPathsToIdentifiers);
+
+      let insertIndex = this.file.ast.program.body.findIndex(node => node.type !== 'ImportDeclaration');
+      insertIndex = insertIndex === -1 ? importStatements.length : insertIndex;
+      this.file.ast.program.body.splice(insertIndex, 0, ...importStatements);
     }
   }
 }

@@ -39,13 +39,13 @@ function addFilesToClassnames(classnames) {
 function *genComputeMapFilesToIdentifiers() {
   let pathsToIdentifiers = [];
   let newPaths = [];
-  let index = 1;
+  let index = 0;
   while (true) {
     pathsToIdentifiers = [
       ...pathsToIdentifiers,
       ...newPaths
         .filter(newPath => !pathsToIdentifiers.find(({path}) => path === newPath))
-        .map(path => ({path, identifier: 'styles' + index++}))
+        .map(path => ({path, identifier: 'styles' + (index ? ++index : '')}))
     ];
     newPaths = yield pathsToIdentifiers;
   }
@@ -80,9 +80,17 @@ function addPathsToClassnames(classnames) {
   return classnames.map(entry => ({
     ...entry,
     ...(entry.file ? {
-      path: path.relative(path.dirname(jsxFilePath), entry.file)
+      path: createPath(jsxFilePath, entry.file)
     } : {})
   }))
+}
+
+function createPath(jsxFilePath, filePath) {
+  let ret = path.relative(path.dirname(jsxFilePath), filePath)
+  if (ret.length > 2 && ret.substring(0,3) === '../') {
+    return ret
+  }
+  return './' + ret
 }
 
 module.exports = {
