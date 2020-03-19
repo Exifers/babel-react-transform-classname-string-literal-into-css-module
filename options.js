@@ -7,6 +7,7 @@ const {toCamelCaseSoft} = require("./cases");
 const {createCSSModuleAttributeValue, createCSSModuleImportStatements} = require("./creators");
 const {computeMapClassnamesToFiles: addFilesToClassnames} = require("./computers");
 const {classnameValueASTExtractor} = require("./extractors");
+const Case = require('case');
 
 const defaultOptions = {
   // AST creators
@@ -46,9 +47,9 @@ const references = [
   {
     optionKey: k.computeLocalClassnameValue,
     values: {
-      [k.camelCase]: _ => _,
+      [k.camelCase]: Case.camel,
       [k.camelCaseSoft]: toCamelCaseSoft,
-      [k.pascalCase]: _ => _,
+      [k.pascalCase]: Case.pascal,
       [k.identity]: _ => _
     }
   }
