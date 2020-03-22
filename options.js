@@ -40,7 +40,8 @@ const defaultOptions = {
   [k.computeLocalClassnameValue]: k.identity,
   [k.useComputedMemberExpression]: true,
 
-  [k.debug]: false
+  [k.debug]: false,
+  [k.expandObjects]: false
 };
 
 const references = [

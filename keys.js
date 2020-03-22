@@ -24,6 +24,7 @@ let keys = {
 
   // debug
   debug: '',
+  expandObjects: '',
   // debug namespaces keys
   prepare: '',
   parse: '',

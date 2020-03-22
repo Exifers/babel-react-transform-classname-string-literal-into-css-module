@@ -82,10 +82,10 @@ inherits@^2.0.3:
   resolved "https://registry.yarnpkg.com/inherits/-/inherits-2.0.4.tgz#0fa2c64f932917c3433a0ded55363aae37416b7c"
   integrity sha512-k/vGaX4/Yla3WzyMCvTQOXYeIHvqOKtnqBduzTHpzpQZzAskKMhZ2K+EnBiSM9zGSoIFeMpXKxa4dYeZIQqewQ==
 
-labelled-logger@^1.0.1:
-  version "1.0.1"
-  resolved "https://registry.yarnpkg.com/labelled-logger/-/labelled-logger-1.0.1.tgz#da4de773e9b81022b7507f68fbb06bad9a897843"
-  integrity sha512-33NUtIj2hZ5J5R4FME72YKfhv/rGqhdaE9Jk+ghmgvORJw3hq1fS1wjChBgfio6l/GUoWYqKhkU32rrQe883Gw==
+labelled-logger@^1.0.4:
+  version "1.0.4"
+  resolved "https://registry.yarnpkg.com/labelled-logger/-/labelled-logger-1.0.4.tgz#3c213e0241a069b2dd4f973b7f5d120844230c87"
+  integrity sha512-HmJ78ZLIpAMNeaEBIiiDVAVSk1mmtc2mI/34BDDL4Kml22t0dTEg+4z7oRpnhvk1KfvBmqN2FBYLnXHZSwiThA==
   dependencies:
     chalk "^3.0.0"
     sprintf-js "^1.1.2"

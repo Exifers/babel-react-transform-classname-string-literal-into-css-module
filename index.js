@@ -11,11 +11,12 @@ function reactTransformClassnameStringLiteralIntoCSSModules({types}) {
       this.optionsDefaulter = new OptionsDefaulter(this.opts);
 
       if (this.optionsDefaulter.get(k.debug)) {
-        _.enable()
+        _.enable();
+        _.setExpandObjects(this.optionsDefaulter.get(k.expandObjects));
       }
       _.log(1, k.prepare, 'Reading options');
       this.stylesFilesData = this.optionsDefaulter.get(k.stylesFilesData);
-      _.log(1, k.prepare, 'Got: ' + JSON.stringify(this.optionsDefaulter.getAll()));
+      _.log(1, k.prepare, 'Got: %s', this.optionsDefaulter.getAll());
 
       this.computeMapFilesToIdentifiers = this.optionsDefaulter.get(k.genComputeMapFilesToIdentifiers)();
       this.computeMapFilesToIdentifiers.next();
