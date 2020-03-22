@@ -61,8 +61,13 @@ class OptionsDefaulter {
   }
 
   get(optionKey) {
-    const optionValue = this.userOptions[optionKey] || defaultOptions[optionKey];
+    let optionValue = this.userOptions[optionKey]
+    optionValue = optionValue === undefined ? defaultOptions[optionKey] : optionValue;
     return this.processReferences(optionKey, optionValue);
+  }
+
+  getAll() {
+    return Object.fromEntries(Object.keys(defaultOptions).map(key => [key,this.get(key)]))
   }
 
   processReferences(optionKey, optionValue) {

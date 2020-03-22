@@ -15,6 +15,7 @@ function reactTransformClassnameStringLiteralIntoCSSModules({types}) {
       }
       _.log(1, k.prepare, 'Reading options');
       this.stylesFilesData = this.optionsDefaulter.get(k.stylesFilesData);
+      _.log(1, k.prepare, 'Got: ' + JSON.stringify(this.optionsDefaulter.getAll()));
 
       this.computeMapFilesToIdentifiers = this.optionsDefaulter.get(k.genComputeMapFilesToIdentifiers)();
       this.computeMapFilesToIdentifiers.next();
